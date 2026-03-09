@@ -1,0 +1,35 @@
+@startuml
+title Telemetry Service Component Diagram
+
+top to bottom direction
+
+!include C4_Component.puml
+
+Container_Boundary(TelemetryService, "Telemetry Service") {
+
+  Component(TelemetryController, "TelemetryController", "REST Controller", "Предоставляет API для получения телеметрии устройств")
+
+  Component(TelemetryConsumer, "TelemetryConsumer", "Message Consumer", "Получает сообщения телеметрии из брокера сообщений")
+
+  Component(TelemetryProcessingService, "TelemetryProcessingService", "Service", "Обрабатывает телеметрию устройств и подготавливает данные для хранения")
+
+  Component(TelemetryRepository, "TelemetryRepository", "Repository", "Работает с данными телеметрии")
+
+}
+
+Container(ApiGateway, "API Gateway", "Nginx", "Маршрутизирует запросы")
+Container(MessageBroker, "Message Broker", "RabbitMQ", "Передает сообщения телеметрии")
+ContainerDb(TelemetryDb, "Telemetry DB", "TimescaleDB / PostgreSQL", "Хранит телеметрию устройств")
+
+Rel(ApiGateway, TelemetryController, "Направляет запросы")
+
+Rel(MessageBroker, TelemetryConsumer, "Передает сообщения")
+
+Rel(TelemetryConsumer, TelemetryProcessingService, "Передает данные")
+Rel(TelemetryProcessingService, TelemetryRepository, "Сохраняет телеметрию")
+
+Rel(TelemetryController, TelemetryRepository, "Читает данные")
+
+Rel(TelemetryRepository, TelemetryDb, "Читает/записывает")
+
+@enduml

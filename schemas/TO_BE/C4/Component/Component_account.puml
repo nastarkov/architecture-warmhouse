@@ -1,0 +1,33 @@
+@startuml
+title Account Service Component Diagram
+
+top to bottom direction
+
+!include C4_Component.puml
+
+Container_Boundary(UserHomeService, "Account Service") {
+  Component(UserController, "UserController", "REST Controller", "Управляет профилем пользователя")
+  Component(HomeController, "HomeController", "REST Controller", "Управляет домами пользователя и их настройками")
+
+  Component(UserServiceComponent, "UserService", "Service", "Управляет профилем пользователя")
+  Component(HomeServiceComponent, "HomeService", "Service", "Управляет домами пользователя и их настройками")
+
+  Component(UserRepository, "UserRepository", "Repository", "Работает с данными пользователей")
+  Component(HomeRepository, "HomeRepository", "Repository", "Работает с данными домов и их настроек")
+}
+
+Container(ApiGateway, "API Gateway", "Nginx", "Маршрутизирует запросы")
+ContainerDb(AccountDb, "Account DB", "PostgreSQL", "Хранит данные пользователей, домов и настроек")
+
+Rel(ApiGateway, UserController, "Направляет запросы")
+Rel(ApiGateway, HomeController, "Направляет запросы")
+
+Rel(UserController, UserServiceComponent, "Вызывает")
+Rel(HomeController, HomeServiceComponent, "Вызывает")
+
+Rel(UserServiceComponent, UserRepository, "Читает/записывает")
+Rel(HomeServiceComponent, HomeRepository, "Читает/записывает")
+
+Rel(UserRepository, AccountDb, "Читает/записывает")
+Rel(HomeRepository, AccountDb, "Читает/записывает")
+@enduml

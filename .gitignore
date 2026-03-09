@@ -16,6 +16,10 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+# Virtual environments
+venv/
+.venv/
+
 # AWS User-specific
 .idea/**/aws.xml
 

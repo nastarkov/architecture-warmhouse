@@ -1,0 +1,413 @@
+openapi: 3.0.3
+info:
+  title: WarmHouse Account Service API
+  version: 1.0.0
+  description: >
+    REST API микросервиса Account
+servers:
+  - url: https://api.warmhouse.local/user-home
+security:
+  - bearerAuth: []
+tags:
+  - name: Users
+  - name: Homes
+paths:
+  /users:
+    post:
+      tags: [Users]
+      summary: Создать профиль пользователя
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+            examples:
+              create:
+                value:
+                  name: "Ivan"
+                  surname: "Petrov"
+                  birthday: "1995-04-23"
+                  phone: "+79990001122"
+                  role: "owner"
+      responses:
+        '201':
+          description: Профиль создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Пользователь с таким phone уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{user_id}:
+    get:
+      tags: [Users]
+      summary: Получить пользователя по ID
+      operationId: getUserById
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Пользователь найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                found:
+                  value:
+                    id: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+                    name: "Ivan"
+                    surname: "Petrov"
+                    birthday: "1995-04-23"
+                    phone: "+79990001122"
+                    role: "owner"
+                    created_at: "2026-03-09T11:00:00Z"
+                    updated_at: "2026-03-09T11:00:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Users]
+      summary: Частично обновить профиль пользователя
+      operationId: patchUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+            examples:
+              update:
+                value:
+                  name: "Ivan"
+                  surname: "Sidorov"
+      responses:
+        '200':
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Users]
+      summary: Удалить пользователя
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: Пользователь удален
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /homes:
+    get:
+      tags: [Homes]
+      summary: Получить все дома пользователя
+      operationId: listHomes
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+      responses:
+        '200':
+          description: Список домов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HomeResponse'
+              examples:
+                list:
+                  value:
+                    - id: "313dd0bc-84be-4e33-9e58-78ddb6344d0c"
+                      user_id: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+                      address: "Moscow, Lenina 10"
+                      square: 120
+                      created_at: "2026-03-09T11:00:00Z"
+                      updated_at: "2026-03-09T11:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Homes]
+      summary: Создать дом
+      operationId: createHome
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HomeCreateRequest'
+            examples:
+              create:
+                value:
+                  user_id: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+                  address: "Moscow, Lenina 10"
+                  square: 120
+      responses:
+        '201':
+          description: Дом создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /homes/{home_id}:
+    get:
+      tags: [Homes]
+      summary: Получить дом по ID
+      operationId: getHomeById
+      parameters:
+        - $ref: '#/components/parameters/HomeId'
+      responses:
+        '200':
+          description: Дом найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/HomeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Homes]
+      summary: Частично обновить дом
+      operationId: patchHome
+      parameters:
+        - $ref: '#/components/parameters/HomeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HomePatchRequest'
+            examples:
+              update:
+                value:
+                  address: "Moscow, Tverskaya 25"
+      responses:
+        '200':
+          description: Дом обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/HomeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Homes]
+      summary: Удалить дом
+      operationId: deleteHome
+      parameters:
+        - $ref: '#/components/parameters/HomeId'
+      responses:
+        '204':
+          description: Дом удален
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/HomeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+    HomeId:
+      name: home_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "313dd0bc-84be-4e33-9e58-78ddb6344d0c"
+  schemas:
+    UserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        surname:
+          type: string
+        birthday:
+          type: string
+          format: date
+        phone:
+          type: string
+        role:
+          type: string
+      additionalProperties: false
+    UserResponse:
+      type: object
+      required: [id, name, surname, birthday, phone, role, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        surname:
+          type: string
+        birthday:
+          type: string
+          format: date
+        phone:
+          type: string
+        role:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    HomeCreateRequest:
+      type: object
+      required: [user_id, address, square]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        address:
+          type: string
+        square:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    HomePatchRequest:
+      type: object
+      minProperties: 1
+      properties:
+        address:
+          type: string
+        square:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    HomeResponse:
+      type: object
+      required: [id, user_id, address, square, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        address:
+          type: string
+        square:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Требуется авторизация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UserNotFound:
+      description: Пользователь не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    HomeNotFound:
+      description: Дом не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

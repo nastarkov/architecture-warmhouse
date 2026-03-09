@@ -1,0 +1,53 @@
+@startuml
+title Code Diagram for DeviceManagementService
+
+top to bottom direction
+
+class DeviceManagementService {
+  +registerDevice(device: Device)
+  +updateDevice(deviceId: Uuid, configuration: Configuration)
+  +blockDevice(deviceId: Uuid)
+  +deleteDevice(deviceId: Uuid)
+  +getDevice(deviceId: Uuid): Device
+}
+
+class DeviceRepository {
+  +save(device: Device)
+  +findById(deviceId: Uuid): Device
+  +delete(deviceId: Uuid)
+}
+
+class ProtocolAdapter {
+  +connectDevice(device: Device)
+  +sendCommand(deviceId: Uuid, command: String)
+  +requestCurrentState(deviceId: Uuid): String
+}
+
+class Device {
+  +Uuid id
+  +String type
+  +Uuid userId
+  +Uuid homeId
+  +Datetime createdAt
+  +Datetime updatedAt
+  +void block()
+  +void updateConfiguration()
+}
+
+class Configuration {
+  +Integer id
+  +Datetime createdAt
+  +Datetime updatedAt
+  +void update()
+  +void delete()
+}
+
+DeviceManagementService --> DeviceRepository : uses
+DeviceManagementService --> ProtocolAdapter : uses
+DeviceManagementService --> Device : manages
+
+Device "1" -- "0..1" Configuration : has
+DeviceRepository --> Device : persists
+ProtocolAdapter --> Device : interacts with
+
+@enduml

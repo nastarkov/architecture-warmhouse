@@ -1,0 +1,43 @@
+@startuml
+title Smarthome Container Diagram
+
+top to bottom direction
+
+!include C4_Container.puml
+
+Person(user, "Пользователь", "Удаленно управляет умным домом")
+System_Ext(Sensors, "Датчики", "Устройства умного дома")
+
+System_Boundary(Smarthome, "Smarthome") {
+  Container(MobileApp, "Mobile Application", "Kotlin, Swift", "Позволяет пользователю подключать устройства, управлять домом, настраивать сценарии и просматривать телеметрию")
+  Container(ApiGateway, "API Gateway", "Nginx", "Маршрутизирует запросы к внутренним сервисам")
+  Container(AuthService, "Auth Service", "Go", "Обеспечивает аутентификацию и авторизацию пользователей")
+  Container(AccountService, "Account Service", "Go", "Управляет пользователями, домами и их настройками")
+  Container(DeviceService, "Device Service", "Go", "Подключает устройства, управляет их настройками, состоянием, командами и сценариями работы")
+  Container(TelemetryService, "Telemetry Service", "Go", "Обрабатывает, хранит и предоставляет телеметрию устройств")
+  ContainerQueue(MessageBroker, "Message Broker", "RabbitMQ", "Принимает и доставляет сообщения телеметрии от устройств")
+
+  ContainerDb(AuthDb, "Auth DB", "PostgreSQL", "Хранит учетные данные и данные аутентификации")
+  ContainerDb(AccountDb, "Account DB", "PostgreSQL", "Хранит данные пользователей, домов и настроек")
+  ContainerDb(DeviceDb, "Device DB", "PostgreSQL", "Хранит данные подключенных устройств, их конфигурацию и сценарии")
+  ContainerDb(TelemetryDb, "Telemetry DB", "TimescaleDB / PostgreSQL", "Хранит телеметрию устройств")
+}
+
+Rel(user, MobileApp, "Управляет умным домом")
+Rel(MobileApp, ApiGateway, "Вызов API по HTTPS")
+
+Rel(ApiGateway, AuthService, "Маршрутизирует запросы")
+Rel(ApiGateway, AccountService, "Маршрутизирует запросы")
+Rel(ApiGateway, DeviceService, "Маршрутизирует запросы")
+Rel(ApiGateway, TelemetryService, "Маршрутизирует запросы")
+
+Rel(AuthService, AuthDb, "Чтение/запись")
+Rel(AccountService, AccountDb, "Чтение/запись")
+Rel(DeviceService, DeviceDb, "Чтение/запись")
+Rel(TelemetryService, TelemetryDb, "Чтение/запись")
+
+Rel(DeviceService, Sensors, "Подключает устройства, отправляет команды и запрашивает текущее состояние")
+Rel(Sensors, MessageBroker, "Публикуют телеметрию")
+Rel(MessageBroker, TelemetryService, "Передает сообщения телеметрии")
+Rel(DeviceService, AccountService, "Проверяет принадлежность устройств дому и пользователю")
+@enduml

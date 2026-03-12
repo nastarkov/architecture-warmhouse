@@ -1,0 +1,74 @@
+@startuml
+title Smarthome ER Diagram
+
+hide circle
+skinparam linetype ortho
+
+entity "User" as user {
+  +id : UUID
+  --
+  name : string
+  surname : string
+  birthday : date
+  phone : string
+  password_hash : string
+  role : string
+  created_at : datetime
+  updated_at : datetime
+}
+
+entity "Auth" as auth {
+  +id : UUID
+  --
+  user_id : UUID <<FK>>
+  created_at : datetime
+  expires_at : datetime
+}
+
+entity "Home" as home {
+  +id : UUID
+  --
+  user_id : UUID <<FK>>
+  created_at : datetime
+  updated_at : datetime
+  address: string
+  square: integer
+}
+
+entity "Device" as device {
+  +id : UUID
+  --
+  home_id : UUID <<FK>>
+  type : string
+  created_at : datetime
+  updated_at : datetime
+  is_blocked : boolean
+  is_enabled : boolean
+}
+
+entity "Configuration" as configuration {
+  +id : UUID
+  --
+  device_id : UUID <<FK>>
+  created_at : datetime
+  updated_at : datetime
+  is_applied : boolean
+  params : json
+}
+
+entity "Telemetry" as telemetry {
+  +id : UUID
+  --
+  device_id : UUID <<FK>>
+  metric_name : string
+  metric_value : string
+  recorded_at : datetime
+}
+
+user ||--|{ auth 
+user ||--o{ home 
+home ||--o{ device 
+device }o--o| configuration 
+device ||--o{ telemetry
+
+@enduml

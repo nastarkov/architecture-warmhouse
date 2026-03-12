@@ -1,0 +1,46 @@
+@startuml
+title Device Service Component Diagram
+
+top to bottom direction
+
+!include C4_Component.puml
+
+Container_Boundary(DeviceService, "Device Service") {
+  Component(DeviceController, "DeviceController", "REST Controller", "Управляет подключением устройств, их настройкой и получением текущего состояния")
+  Component(ScenarioController, "ScenarioController", "REST Controller", "Управляет сценариями работы устройств")
+
+  Component(DeviceManagementService, "DeviceManagementService", "Service", "Регистрирует устройства, привязывает их к дому и управляет их конфигурацией")
+  Component(CommandService, "CommandService", "Service", "Отправляет команды устройствам и запрашивает их текущее состояние")
+  Component(ScenarioService, "ScenarioService", "Service", "Создает, изменяет и выполняет сценарии работы устройств")
+
+  Component(ProtocolAdapter, "ProtocolAdapter", "Adapter", "Интегрируется с устройствами партнеров по стандартным протоколам")
+
+  Component(DeviceRepository, "DeviceRepository", "Repository", "Работает с данными устройств и их конфигурацией")
+  Component(ScenarioRepository, "ScenarioRepository", "Repository", "Работает с данными сценариев")
+}
+
+Container(ApiGateway, "API Gateway", "Nginx", "Маршрутизирует запросы к внутренним сервисам")
+Container(UserHomeService, "User/Home Service", "Go / Java", "Управляет пользователями, домами и их настройками")
+ContainerDb(DeviceDb, "Device DB", "PostgreSQL", "Хранит данные устройств, конфигурации и сценариев")
+System_Ext(Sensors, "Датчики", "Устройства умного дома")
+
+Rel(ApiGateway, DeviceController, "Направляет запросы")
+Rel(ApiGateway, ScenarioController, "Направляет запросы")
+
+Rel(DeviceController, DeviceManagementService, "Вызывает")
+Rel(DeviceController, CommandService, "Вызывает")
+Rel(ScenarioController, ScenarioService, "Вызывает")
+
+Rel(DeviceManagementService, DeviceRepository, "Читает/записывает")
+Rel(ScenarioService, ScenarioRepository, "Читает/записывает")
+
+Rel(CommandService, ProtocolAdapter, "Отправляет команды через")
+Rel(DeviceManagementService, ProtocolAdapter, "Подключает и настраивает устройства через")
+Rel(ProtocolAdapter, Sensors, "Обменивается данными")
+
+Rel(DeviceRepository, DeviceDb, "Читает/записывает")
+Rel(ScenarioRepository, DeviceDb, "Читает/записывает")
+
+Rel(DeviceManagementService, UserHomeService, "Проверяет принадлежность устройств дому и пользователю")
+Rel(ScenarioService, UserHomeService, "Проверяет принадлежность сценариев дому и пользователю")
+@enduml

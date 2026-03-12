@@ -1,0 +1,346 @@
+openapi: 3.0.3
+info:
+  title: WarmHouse Device Service API
+  version: 1.2.0
+  description: >
+    REST API для управления устройствами и их конфигурацией.
+    Поля и операции соответствуют ER-модели Device/Configuration.
+servers:
+  - url: https://api.warmhouse.local/devices
+security:
+  - bearerAuth: []
+tags:
+  - name: Devices
+  - name: Configurations
+paths:
+  /:
+    get:
+      tags: [Devices]
+      summary: Получить все устройства дома
+      operationId: listDevices
+      parameters:
+        - name: home_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "313dd0bc-84be-4e33-9e58-78ddb6344d0c"
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Devices]
+      summary: Зарегистрировать устройство
+      operationId: createDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRequest'
+            examples:
+              create:
+                value:
+                  home_id: "313dd0bc-84be-4e33-9e58-78ddb6344d0c"
+                  type: "датчик_движения"
+                  is_blocked: false
+                  is_enabled: true
+      responses:
+        '201':
+          description: Устройство создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/HomeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /{device_id}:
+    get:
+      tags: [Devices]
+      summary: Получить устройство по ID
+      operationId: getDeviceById
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Устройство найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Devices]
+      summary: Удалить устройство
+      operationId: deleteDevice
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '204':
+          description: Устройство удалено
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /{device_id}/state:
+    patch:
+      tags: [Devices]
+      summary: Обновить состояние устройства
+      operationId: patchDeviceState
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceStateRequest'
+            examples:
+              state:
+                value:
+                  is_blocked: false
+                  is_enabled: true
+      responses:
+        '200':
+          description: Состояние устройства обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /{device_id}/configuration:
+    post:
+      tags: [Configurations]
+      summary: Создать конфигурацию устройства
+      operationId: createConfiguration
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationCreateRequest'
+            examples:
+              create:
+                value:
+                  params:
+                    target_temperature: 22
+                    mode: "eco"
+      responses:
+        '201':
+          description: Конфигурация создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /{device_id}/configuration/apply:
+    post:
+      tags: [Configurations]
+      summary: Применить последнюю конфигурацию устройства
+      operationId: applyConfiguration
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Конфигурация применена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationResponse'
+              examples:
+                applied:
+                  value:
+                    id: "6f348e43-d716-4c3f-9027-5306e5dc1832"
+                    device_id: "0d87d8bc-205b-4dbc-b2d2-11691986f0af"
+                    is_applied: true
+                    params:
+                      target_temperature: 22
+                      mode: "eco"
+                    created_at: "2026-03-09T12:00:00Z"
+                    updated_at: "2026-03-09T12:03:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Устройство или конфигурация не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    DeviceId:
+      name: device_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "0d87d8bc-205b-4dbc-b2d2-11691986f0af"
+  schemas:
+    DeviceRequest:
+      type: object
+      required: [home_id, type, is_blocked, is_enabled]
+      properties:
+        home_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - датчик_движения
+            - управление_светом
+            - управление_температурой
+            - открытие_ворот
+        is_blocked:
+          type: boolean
+        is_enabled:
+          type: boolean
+      additionalProperties: false
+    DeviceStateRequest:
+      type: object
+      required: [is_blocked, is_enabled]
+      properties:
+        is_blocked:
+          type: boolean
+        is_enabled:
+          type: boolean
+      additionalProperties: false
+    DeviceResponse:
+      type: object
+      required: [id, home_id, type, is_blocked, is_enabled, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        home_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        is_blocked:
+          type: boolean
+        is_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConfigurationCreateRequest:
+      type: object
+      required: [params]
+      properties:
+        params:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    ConfigurationResponse:
+      type: object
+      required: [id, device_id, is_applied, params, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+          format: uuid
+        is_applied:
+          type: boolean
+        params:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Требуется авторизация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    DeviceNotFound:
+      description: Устройство не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    HomeNotFound:
+      description: Дом не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

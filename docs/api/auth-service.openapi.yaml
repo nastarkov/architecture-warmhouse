@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: WarmHouse Auth Service API
+  version: 1.1.0
+  description: >
+    Единая точка входа для первичной регистрации и последующих входов
+servers:
+  - url: https://api.warmhouse.local/auth
+tags:
+  - name: Auth
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Регистрация или вход по phone/password
+      description: >
+        Если пользователя с phone нет - создается пользователь и сессия.
+        Если пользователь есть и пароль верный - создается новая сессия при условии что текущая не истекла
+      operationId: registerOrLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCredentialsRequest'
+            examples:
+              credentials:
+                value:
+                  phone: "+79990001122"
+                  password: "StrongPass_123"
+      responses:
+        '201':
+          description: Новый пользователь зарегистрирован, сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+              examples:
+                created:
+                  value:
+                    id: "f2eca331-2bc5-45f3-a615-ddf340ae8ea8"
+                    user_id: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+                    created_at: "2026-03-09T11:00:00Z"
+                    expires_at: "2026-03-09T19:00:00Z"
+        '200':
+          description: Вход существующего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+              examples:
+                loggedIn:
+                  value:
+                    id: "24f9b752-c224-470f-9218-2906908914e3"
+                    user_id: "a8fb77db-cf37-4f74-9a37-f8b74bf39cd0"
+                    created_at: "2026-03-09T12:10:00Z"
+                    expires_at: "2026-03-09T20:10:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Неверный пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPassword:
+                  value:
+                    code: "INVALID_CREDENTIALS"
+                    message: "Invalid phone or password"
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  schemas:
+    AuthCredentialsRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+          example: "+79990001122"
+        password:
+          type: string
+          minLength: 8
+          example: "StrongPass_123"
+    AuthSessionResponse:
+      type: object
+      required: [id, user_id, created_at, expires_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сессии (сессионный токен)
+        user_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Ошибка валидации запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            badRequest:
+              value:
+                code: "BAD_REQUEST"
+                message: "Phone and password are required"
+    InternalError:
+      description: Внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal:
+              value:
+                code: "INTERNAL_ERROR"
+                message: "Unexpected server error"

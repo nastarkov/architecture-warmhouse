@@ -1,0 +1,21 @@
+@startuml
+title Auth Service Component Diagram
+
+top to bottom direction
+
+!include C4_Component.puml
+
+Container_Boundary(AuthService, "Auth Service") {
+  Component(AuthController, "AuthController", "REST Controller", "Обрабатывает запросы на регистрацию, вход и обновление токенов")
+  Component(AuthServiceComponent, "AuthService", "Service", "Выполняет аутентификацию, авторизацию и управление токенами")
+  Component(AuthRepository, "AuthRepository", "Repository", "Работает с учетными данными пользователей и токенами")
+}
+
+Container(ApiGateway, "API Gateway", "Nginx", "Маршрутизирует запросы")
+ContainerDb(AuthDb, "Auth DB", "PostgreSQL", "Хранит учетные данные и данные аутентификации")
+
+Rel(ApiGateway, AuthController, "Направляет запросы")
+Rel(AuthController, AuthServiceComponent, "Вызывает")
+Rel(AuthServiceComponent, AuthRepository, "Читает/записывает")
+Rel(AuthRepository, AuthDb, "Читает/записывает")
+@enduml

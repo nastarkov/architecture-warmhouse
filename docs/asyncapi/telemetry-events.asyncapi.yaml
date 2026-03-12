@@ -1,0 +1,58 @@
+asyncapi: 2.6.0
+info:
+  title: WarmHouse Telemetry Events API
+  version: 1.2.0
+  description: >
+    Событийный контракт между Sensors, Message Broker и Telemetry Service
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    url: broker.warmhouse.local:5672
+    protocol: amqp
+    description: RabbitMQ broker
+channels:
+  telemetry.measurement.received:
+    description: Новое измерение телеметрии от датчика
+    publish:
+      operationId: publishTelemetryMeasurement
+      summary: Sensors публикуют измерение
+      message:
+        $ref: '#/components/messages/TelemetryMeasurementReceived'
+    subscribe:
+      operationId: consumeTelemetryMeasurement
+      summary: Telemetry Service сохраняет измерение
+      message:
+        $ref: '#/components/messages/TelemetryMeasurementReceived'
+components:
+  messages:
+    TelemetryMeasurementReceived:
+      name: TelemetryMeasurementReceived
+      title: Telemetry measurement received
+      payload:
+        $ref: '#/components/schemas/TelemetryMeasurementPayload'
+      examples:
+        - name: measurement
+          payload:
+            event_id: "bc4e7997-3ff5-4fcf-a1f7-0db6cb6a0de6"
+            device_id: "0d87d8bc-205b-4dbc-b2d2-11691986f0af"
+            metric_name: "temperature"
+            metric_value: "22.4"
+            recorded_at: "2026-03-09T12:01:30Z"
+  schemas:
+    TelemetryMeasurementPayload:
+      type: object
+      required: [event_id, device_id, metric_name, metric_value, recorded_at]
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+          format: uuid
+        metric_name:
+          type: string
+        metric_value:
+          type: string
+        recorded_at:
+          type: string
+          format: date-time
